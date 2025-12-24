@@ -33,3 +33,4 @@ These item responses are compiled into an English dictionary in `advant_dict.csv
 
 > to get frequencies of item responses..use `base::grepl()` to match each item to the original written answers..
 
+https://doi.org/10.5281/zenodo.18044639
