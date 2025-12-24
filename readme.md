@@ -1,5 +1,8 @@
 # ..advantages of living in volcanic areas..
 
+[![DOI](https://zenodo.org/badge/1122168799.svg)](https://doi.org/10.5281/zenodo.18044638)
+
+
 > Title
 - Perceptual Advantages of People Living in Semeru Volcanic Areas, Indonesia: An MRCV (Multiple Response Categorical Variable) Analysis
 
@@ -32,5 +35,3 @@ testing the hypothesis that these advantages offset objective risk in hazardous-
 These item responses are compiled into an English dictionary in `advant_dict.csv`..
 
 > to get frequencies of item responses..use `base::grepl()` to match each item to the original written answers..
-
-[![DOI](https://zenodo.org/badge/1122168799.svg)](https://doi.org/10.5281/zenodo.18044638)
