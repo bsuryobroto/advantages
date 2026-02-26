@@ -17,7 +17,7 @@ advantages <- read.csv( "data/advantages.csv" )
 ##  $ gender              : chr  "Male" "Male" "Female" "Female" ...
 ##  $ advantage_risky_area: chr  "tanah subur" "tanah subur, mata air besar" "Jauh dari polusi  Gampang Mandapat bahan makanan" "Bisa makan, dapat pangasilan,dekat sama keluarga" ...
 
-# item responses as words to cloud..
+# item responses as words..
 (words <- read.csv("data/advant_dict.csv",header=FALSE)[,1])
 ##  [1] "sda"         "pasir"       "tambang"     "batu"        "subur"      
 ##  [6] "tanah"       "lahan"       "air"         "ekonomi"     "kerja"      
@@ -88,9 +88,9 @@ advantages[,item] <- ifelse( grepl( item ,
 ##  $ adem       : num  0 0 0 0 0 0 0 0 0 0 ...
 
     #
-    # word frequencies..
+    # ---- word frequencies ----
     #
-
+#
     MALEinRISKY <- advantages[advantages$Risky_Area=="Risky"&advantages$gender=="Male",4:39]
     MALEinSAFE <- advantages[advantages$Risky_Area=="Safe"&advantages$gender=="Male",4:39]
     FEMALEinRISKY <- advantages[advantages$Risky_Area=="Risky"&advantages$gender=="Female",4:39]
@@ -181,29 +181,118 @@ advant.words <- data.frame( WORDS = row.names(advant.words) ,
 ##  $ MALEinSAFE   : num  0.281 0.562 0.326 0.14 1 ...
 ##  $ FEMALEinRISKY: num  0.161 0.483 0.322 0.161 1 ...
 ##  $ FEMALEinSAFE : num  0.364 0.677 0.468 0.364 1 ...
-        IDX <- order(advant.words$MALEinRISKY,decreasing=TRUE)
-    library(kableExtra)
-    advant.words[IDX,] |> 
-        kableExtra::kbl() |>    # html table..try kable() for markdown
-        kableExtra::kable_classic(full_width = F, html_font = "Cambria") #|>
-        #kableExtra::save_kable(file = "table1.html", self_contained = T)
+
 
     #
-    # ---- word clouds ----
+    # ---- bump chart ----
     #
-    library(wordcloud2)
-        set.seed(1)     # for reproducibility..but..
-    # if you want to save the cloud..first make the html widget as an R object
-MALEinRISKY <- wordcloud2::wordcloud2( data=advant.words[,1:2] , minRotation = -pi/2, maxRotation = -pi/2)
-MALEinSAFE <- wordcloud2::wordcloud2( data=advant.words[,c(1,3)] , minRotation = -pi/2, maxRotation = -pi/2)
-FEMALEinRISKY <- wordcloud2::wordcloud2( data=advant.words[,c(1,4)] , minRotation = -pi/2, maxRotation = -pi/2)
-FEMALEinSAFE <- wordcloud2::wordcloud2( data=advant.words[,c(1,5)] , minRotation = -pi/2, maxRotation = -pi/2)
-        # save the html widgets as html files
-        ## install.packages("htmlwidgets")
-        library(htmlwidgets)    # don't make the html file into `/out` folder..!
-                                # it will create nested folders..
-                                # move them later..
-    htmlwidgets::saveWidget(MALEinRISKY,"Males_in_RISKY.html",selfcontained = TRUE)
-    htmlwidgets::saveWidget(MALEinSAFE,"Males_in_SAFE.html",selfcontained = TRUE)
-    htmlwidgets::saveWidget(FEMALEinRISKY,"Females_in_RISKY.html",selfcontained = TRUE)
-    htmlwidgets::saveWidget(FEMALEinSAFE,"Females_in_SAFE.html",selfcontained = TRUE)
+
+    # ggbump::geom_bump() requires long format data..
+    advant.words <- reshape( 
+        advant.words, 
+            direction = "long",     # long format..
+            varying = list(2:5),
+            v.names = "FREQUENCY",
+            timevar = "GROUP",
+            times = c("MALEinRISKY", "MALEinSAFE", "FEMALEinRISKY", "FEMALEinSAFE"),
+            idvar = "WORDS"
+        )
+        head(advant.words)
+##                       WORDS       GROUP FREQUENCY
+## sda.MALEinRISKY         sda MALEinRISKY 0.3073238
+## pasir.MALEinRISKY     pasir MALEinRISKY 0.4870967
+## tambang.MALEinRISKY tambang MALEinRISKY 0.3567919
+## batu.MALEinRISKY       batu MALEinRISKY 0.3073238
+## subur.MALEinRISKY     subur MALEinRISKY 1.0000000
+## tanah.MALEinRISKY     tanah MALEinRISKY 0.9386474
+        row.names(advant.words) <- NULL
+    # create numeric version of GROUP for positioning labels
+    advant.words$GROUP_NUM <- 
+        factor( advant.words$GROUP,
+        levels = c( "MALEinRISKY", 
+                    "FEMALEinRISKY", 
+                    "MALEinSAFE", 
+                    "FEMALEinSAFE") ) |>
+        as.numeric()
+    str(advant.words)
+## 'data.frame':   144 obs. of  4 variables:
+##  $ WORDS    : chr  "sda" "pasir" "tambang" "batu" ...
+##  $ GROUP    : chr  "MALEinRISKY" "MALEinRISKY" "MALEinRISKY" "MALEinRISKY" ...
+##  $ FREQUENCY: num  0.307 0.487 0.357 0.307 1 ...
+##  $ GROUP_NUM: num  1 1 1 1 1 1 1 1 1 1 ...
+##  - attr(*, "reshapeLong")=List of 4
+##   ..$ varying:List of 1
+##   .. ..$ : chr [1:4] "MALEinRISKY" "MALEinSAFE" "FEMALEinRISKY" "FEMALEinSAFE"
+##   ..$ v.names: chr "FREQUENCY"
+##   ..$ idvar  : chr "WORDS"
+##   ..$ timevar: chr "GROUP"
+#
+    # load required libraries..
+    library(ggplot2)        # the plotting grid
+    library(ggbump)         # the bump engine
+    library(ggrepel)        # for geom_text_repel
+    library(cowplot)        # for theme_minimal_grid
+    library(wesanderson)    # for color palette
+
+    # plotting..
+ggplot2::ggplot( 
+    data = advant.words, 
+    aes( x = GROUP_NUM, 
+        y =FREQUENCY, 
+        group = WORDS,
+        color = WORDS ) 
+    ) +
+    cowplot::theme_minimal_grid() +  # the simplest white paper-like theme..
+    #
+    # bump lines and points..!
+    # -- plot all lines in light gray first..
+    ggbump::geom_bump( 
+        linewidth = 0.6, 
+        smooth = 10, 
+        #color = "gray90",   # theme be set to cowplot::theme_minimal_grid()
+        show.legend = F ) +
+    # -- show points..
+    ggplot2::geom_point(
+        size = 2, show.legend = F) +
+    # color palette for 36 words..
+        ggplot2::scale_color_manual(
+            values = wesanderson::wes_palette( "Zissou1", 
+                                                n = 36, 
+                                                type = "continuous"), 
+            guide = "none") +
+    # labelling the rightmost column..
+            # allow text to extend beyond the plot area
+        ggplot2::coord_cartesian(clip = "off") +
+            # prepare x-axis..
+        ggplot2::scale_x_discrete(
+            # REORDER the x-axis to contrast gender in an area..!
+            limits = c("MALEinRISKY", "FEMALEinRISKY", "MALEinSAFE", "FEMALEinSAFE"),
+            labels = c("MALE in RISKY", "FEMALE in RISKY", "MALE in SAFE", "FEMALE in SAFE"),
+            # extend x-axis to accommodate the new label column
+            expand = expansion(add = c(0, 0.7))
+            ) +
+        ggrepel::geom_text_repel(
+            data = subset(advant.words, GROUP == "FEMALEinSAFE"),
+            aes(label = WORDS , color = WORDS),
+            x = 4.01,
+            hjust = -0.5,   # right align
+            size = 4,
+            show.legend = F
+            ) +
+    # titles and theme..
+        ggplot2::labs(
+            title = "What are the advantages to live in a volcanic risk area?",
+            subtitle = "Item responses:\n** Experienced feelings, perspectives and opinions of residents\n** Tangible and intangible benefits from their local environment",
+            caption = "Frequency of Words Mentioned as Item of Advantages",
+            x = "",
+            y = "Normalized Frequency"
+            ) +
+        ggplot2::theme(
+            plot.title = element_text(hjust = 0, size = 16, face = "bold"),
+            plot.subtitle = element_text(hjust = 0, size = 14, face = "italic"),
+            plot.caption = element_text(hjust = 1, size = 10)
+            ) -> p
+    # save the plot..
+svglite::svglite("out/advantages_words.svg", width = 8, height = 8)
+    print(p)
+    dev.off()

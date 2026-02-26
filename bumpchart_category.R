@@ -17,7 +17,7 @@ advantages <- read.csv( "data/advantages.csv" )
 ##  $ gender              : chr  "Male" "Male" "Female" "Female" ...
 ##  $ advantage_risky_area: chr  "tanah subur" "tanah subur, mata air besar" "Jauh dari polusi  Gampang Mandapat bahan makanan" "Bisa makan, dapat pangasilan,dekat sama keluarga" ...
 
-# item responses as words to cloud..
+# item responses as words..
 (words <- read.csv("data/advant_dict.csv",header=FALSE)[,1])
 ##  [1] "sda"         "pasir"       "tambang"     "batu"        "subur"      
 ##  [6] "tanah"       "lahan"       "air"         "ekonomi"     "kerja"      
@@ -88,9 +88,9 @@ advantages[,item] <- ifelse( grepl( item ,
 ##  $ adem       : num  0 0 0 0 0 0 0 0 0 0 ...
 
     #
-    # word frequencies..
+    # ---- word frequencies ----
     #
-
+#
     MALEinRISKY <- advantages[advantages$Risky_Area=="Risky"&advantages$gender=="Male",4:39]
     MALEinSAFE <- advantages[advantages$Risky_Area=="Safe"&advantages$gender=="Male",4:39]
     FEMALEinRISKY <- advantages[advantages$Risky_Area=="Risky"&advantages$gender=="Female",4:39]
@@ -156,7 +156,7 @@ advant.words <- data.frame(
     apply(advant.words,2,sum)
 ##   MALEinRISKY    MALEinSAFE FEMALEinRISKY  FEMALEinSAFE 
 ##           390           676           356           801 
-
+    #
     # normalize the counts..convert to percentages..
     advant.words <- apply(advant.words, 2, log1p) # log(1 + x) to handle zero values
         NORMALIZE <- function(x) { return((x - min(x)) / (max(x) - min(x))) }
@@ -181,29 +181,203 @@ advant.words <- data.frame( WORDS = row.names(advant.words) ,
 ##  $ MALEinSAFE   : num  0.281 0.562 0.326 0.14 1 ...
 ##  $ FEMALEinRISKY: num  0.161 0.483 0.322 0.161 1 ...
 ##  $ FEMALEinSAFE : num  0.364 0.677 0.468 0.364 1 ...
-        IDX <- order(advant.words$MALEinRISKY,decreasing=TRUE)
-    library(kableExtra)
-    advant.words[IDX,] |> 
-        kableExtra::kbl() |>    # html table..try kable() for markdown
-        kableExtra::kable_classic(full_width = F, html_font = "Cambria") #|>
-        #kableExtra::save_kable(file = "table1.html", self_contained = T)
+
 
     #
-    # ---- word clouds ----
+    # ---- bump chart ----
     #
-    library(wordcloud2)
-        set.seed(1)     # for reproducibility..but..
-    # if you want to save the cloud..first make the html widget as an R object
-MALEinRISKY <- wordcloud2::wordcloud2( data=advant.words[,1:2] , minRotation = -pi/2, maxRotation = -pi/2)
-MALEinSAFE <- wordcloud2::wordcloud2( data=advant.words[,c(1,3)] , minRotation = -pi/2, maxRotation = -pi/2)
-FEMALEinRISKY <- wordcloud2::wordcloud2( data=advant.words[,c(1,4)] , minRotation = -pi/2, maxRotation = -pi/2)
-FEMALEinSAFE <- wordcloud2::wordcloud2( data=advant.words[,c(1,5)] , minRotation = -pi/2, maxRotation = -pi/2)
-        # save the html widgets as html files
-        ## install.packages("htmlwidgets")
-        library(htmlwidgets)    # don't make the html file into `/out` folder..!
-                                # it will create nested folders..
-                                # move them later..
-    htmlwidgets::saveWidget(MALEinRISKY,"Males_in_RISKY.html",selfcontained = TRUE)
-    htmlwidgets::saveWidget(MALEinSAFE,"Males_in_SAFE.html",selfcontained = TRUE)
-    htmlwidgets::saveWidget(FEMALEinRISKY,"Females_in_RISKY.html",selfcontained = TRUE)
-    htmlwidgets::saveWidget(FEMALEinSAFE,"Females_in_SAFE.html",selfcontained = TRUE)
+
+    # ggbump::geom_bump() requires long format data..
+    advant.words <- reshape( 
+        advant.words, 
+            direction = "long",     # long format..
+            varying = list(2:5),
+            v.names = "FREQUENCY",
+            timevar = "GROUP",
+            times = c("MALEinRISKY", "MALEinSAFE", "FEMALEinRISKY", "FEMALEinSAFE"),
+            idvar = "WORDS"
+        )
+        head(advant.words)
+##                       WORDS       GROUP FREQUENCY
+## sda.MALEinRISKY         sda MALEinRISKY 0.3073238
+## pasir.MALEinRISKY     pasir MALEinRISKY 0.4870967
+## tambang.MALEinRISKY tambang MALEinRISKY 0.3567919
+## batu.MALEinRISKY       batu MALEinRISKY 0.3073238
+## subur.MALEinRISKY     subur MALEinRISKY 1.0000000
+## tanah.MALEinRISKY     tanah MALEinRISKY 0.9386474
+        row.names(advant.words) <- NULL
+    # create numeric version of GROUP for positioning labels
+    advant.words$GROUP_NUM <- 
+        factor( advant.words$GROUP,
+        levels = c( "MALEinRISKY", 
+                    "FEMALEinRISKY", 
+                    "MALEinSAFE", 
+                    "FEMALEinSAFE") ) |>
+        as.numeric()
+    str(advant.words)
+## 'data.frame':   144 obs. of  4 variables:
+##  $ WORDS    : chr  "sda" "pasir" "tambang" "batu" ...
+##  $ GROUP    : chr  "MALEinRISKY" "MALEinRISKY" "MALEinRISKY" "MALEinRISKY" ...
+##  $ FREQUENCY: num  0.307 0.487 0.357 0.307 1 ...
+##  $ GROUP_NUM: num  1 1 1 1 1 1 1 1 1 1 ...
+##  - attr(*, "reshapeLong")=List of 4
+##   ..$ varying:List of 1
+##   .. ..$ : chr [1:4] "MALEinRISKY" "MALEinSAFE" "FEMALEinRISKY" "FEMALEinSAFE"
+##   ..$ v.names: chr "FREQUENCY"
+##   ..$ idvar  : chr "WORDS"
+##   ..$ timevar: chr "GROUP"
+#
+    # load required libraries..
+    library(ggplot2)        # the plotting grid
+    library(ggbump)         # the bump engine
+    library(ggrepel)        # for geom_text_repel
+    library(cowplot)        # for theme_minimal_grid
+    library(wesanderson)    # for color palette
+
+    #
+    # define conceptual frameworks..
+    #
+# NATURAL RESOURCE : Direct economic and material benefits from extracting volcanic sand and stone
+# LAND : Exceptional soil fertility that forms the foundation of the local agrarian economy
+# ECONOMIC : Broader livelihood opportunities, including agriculture and volcano-driven tourism
+# BIRTH/FAMILY : Lineage/kin ties, birthright, and deep social networks that create an intergenerational connection to the land
+# COMFORT : A profound sense of safety, tranquility, and emotional well-being derived from the homeland
+# CLIMATE : A preferred quality of life attributed to the region’s cool, fresh air and superior air quality
+    #
+    # define word groups..
+    NAT_RES = c("sda","pasir","tambang","batu")
+    LAND = c("subur","tanah","lahan","air")
+    ECONOMIC = c("ekonomi","kerja","pencaharian","makan","rezeki","wisata","tanaman","pangan","tani","kebun")
+    BIRTH = c("lahir","parent","keluarga","choice","rukun","gotong")
+    COMFORT = c("safe","comfort","tentram","asri","tenang") 
+    CLIMATE = c("udara","sejuk","segar","dingin","polusi","cuaca","adem")
+
+    #
+    # ---- plotting function ----
+    #
+    plot_advantage_bumpchart <- function(data,
+                                         words_to_highlight,
+                                         framework_name,
+                                         framework_description,
+                                         output_filename) {
+      
+      p <- ggplot2::ggplot(
+        data = data,
+        aes( x = GROUP_NUM,
+             y = FREQUENCY,
+             group = WORDS,
+             color = WORDS )
+      ) +
+        cowplot::theme_minimal_grid() +
+        # bump lines and points..!
+        # -- plot all lines in light gray first..
+        ggbump::geom_bump(
+          linewidth = 0.6,
+          smooth = 10,
+          color = "gray90",
+          show.legend = F ) +
+        # -- overplot target words..
+        ggbump::geom_bump(
+          data = subset( data , WORDS %in% words_to_highlight ),
+          aes(color = WORDS),
+          linewidth = 0.8,
+          smooth = 10,
+          show.legend = F ) +
+        # -- show points..
+        ggplot2::geom_point(
+          data = subset( data, WORDS %in% words_to_highlight ),
+          size = 2, show.legend = F) +
+        # labelling the rightmost column..
+        ggplot2::coord_cartesian(clip = "off") +
+        # prepare x-axis..
+        ggplot2::scale_x_discrete(
+          limits = c("MALEinRISKY", "FEMALEinRISKY", "MALEinSAFE", "FEMALEinSAFE"),
+          labels = c("MALE in RISKY", "FEMALE in RISKY", "MALE in SAFE", "FEMALE in SAFE"),
+          expand = expansion(add = c(0, 0.3))
+        ) +
+        ggrepel::geom_text_repel(
+          data = subset(data, GROUP == "FEMALEinSAFE" & WORDS %in% words_to_highlight),
+          aes(label = WORDS , color = WORDS),
+          x = 4.01,
+          hjust = -0.5,
+          size = 4,
+          show.legend = F
+        ) +
+        # titles and theme..
+        ggplot2::labs(
+          title = "Conceptual Framework of Advantage\nto Live in a Volcanic Risk Area",
+          subtitle = framework_description,
+          caption = paste("Mentions of Advantageous Items of", framework_name, "Framework"),
+          x = "",
+          y = "Normalized Frequency"
+        ) +
+        ggplot2::theme(
+          plot.title = element_text(hjust = 0, size = 16, face = "bold"),
+          plot.subtitle = element_text(hjust = 0, size = 14, face = "italic"),
+          plot.caption = element_text(hjust = 1, size = 10)
+        )
+      
+      # save the plot..
+      svglite::svglite(output_filename, width = 8, height = 8)
+      print(p)
+      dev.off()
+      # return the plot object invisibly
+      invisible(p)
+    }
+
+    #
+    # ---- generate plots for all frameworks ----
+    #
+    # CLIMATE framework
+    plot_advantage_bumpchart(
+      data = advant.words,
+      words_to_highlight = CLIMATE,
+      framework_name = "CLIMATE",
+      framework_description = "CLIMATE : A preferred quality of life attributed to the region's cool,\nfresh air and superior air quality",
+      output_filename = "out/advantages_climate_words.svg"
+    )
+    
+    # COMFORT framework
+    plot_advantage_bumpchart(
+      data = advant.words,
+      words_to_highlight = COMFORT,
+      framework_name = "COMFORT",
+      framework_description = "COMFORT : A profound sense of safety, tranquility, and emotional well-being\nderived from the homeland",
+      output_filename = "out/advantages_comfort_words.svg"
+    )
+    
+    # BIRTH framework
+    plot_advantage_bumpchart(
+      data = advant.words,
+      words_to_highlight = BIRTH,
+      framework_name = "BIRTH/FAMILY",
+      framework_description = "BIRTH/FAMILY : Lineage/kin ties, birthright, and deep social networks\nthat create an intergenerational connection to the land",
+      output_filename = "out/advantages_birth_words.svg"
+    )
+    
+    # ECONOMIC framework
+    plot_advantage_bumpchart(
+      data = advant.words,
+      words_to_highlight = ECONOMIC,
+      framework_name = "ECONOMIC",
+      framework_description = "ECONOMIC : Broader livelihood opportunities, including agriculture\nand volcano-driven tourism",
+      output_filename = "out/advantages_economic_words.svg"
+    )
+    
+    # LAND framework
+    plot_advantage_bumpchart(
+      data = advant.words,
+      words_to_highlight = LAND,
+      framework_name = "LAND",
+      framework_description = "LAND : Exceptional soil fertility that forms the foundation\nof the local agrarian economy",
+      output_filename = "out/advantages_land_words.svg"
+    )
+    
+    # NATURAL RESOURCE framework
+    plot_advantage_bumpchart(
+      data = advant.words,
+      words_to_highlight = NAT_RES,
+      framework_name = "NATURAL RESOURCE",
+      framework_description = "NATURAL RESOURCE : Direct economic and material benefits\nfrom extracting volcanic sand and stone",
+      output_filename = "out/advantages_natres_words.svg"
+    )
