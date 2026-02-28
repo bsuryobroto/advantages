@@ -9,8 +9,8 @@
 > Publisher:
 - [HAYATI Journal of Biosciences (HAYATI J Biosci; p-ISSN: 1978-3019; e-ISSN: 2086-4094)](https://doi.org/10.4308/hjb.33.3.739-749)
 
-> This is the repository for data..statistical `R` script..and results..
-[![DOI](https://zenodo.org/badge/1122168799.svg)](https://doi.org/10.5281/zenodo.18044638)
+> This is the repository for data..statistical `R` script..and results..  
+- [![DOI](https://zenodo.org/badge/1122168799.svg)](https://doi.org/10.5281/zenodo.18044638)
 
 
 ## aims..
@@ -27,10 +27,10 @@ This study aims to
 > We asked an open-ended question: “What are the advantages to live in a volcanic risk area?” 
 
 ### multiple answers and recurrence..and their inferred item responses..
-> [AAA] wrote “tanah subur, sumber mata air melimpah, dan sejuk”
-- we infer `subur`, `air`, and `sejuk` **item response**s of advantageousness..
-> [BBB] wrote “cuacanya dingin, subur”
-- we infer this as `sejuk` and `subur`..
+> [AAA] wrote “tanah subur, sumber mata air melimpah, dan sejuk”  
+- we infer `subur`, `air`, and `sejuk` **item response**s of advantageousness..  
+> [BBB] wrote “cuacanya dingin, subur”  
+- we infer this as `sejuk` and `subur`..  
 
 These item responses are compiled into an English dictionary in `advant_dict.csv`..
 
@@ -38,6 +38,8 @@ These item responses are compiled into an English dictionary in `advant_dict.csv
 
 ## visualization...
 
-- item response frequencies are visualized in wordclouds grouped by residency and gender..you can find the plots in our publication..
-- however..each of the four wordclouds is not fully interpretable due to randomness in the placement of the items..
-- we therefore now provide bumpcharts of item response frequencies..
+- item response frequencies are visualized in wordclouds grouped by residency and gender..you can find the plots in our publication..  
+- however..each of the four wordclouds is not fully interpretable due to randomness in the placement of the items..  
+- we therefore now provide bumpcharts of item response frequencies..like this one..  
+  
+![bumpchart 36 words](out/advantages_words.svg)
