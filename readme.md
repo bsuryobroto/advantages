@@ -27,6 +27,7 @@ This study aims to
 > We asked an open-ended question: “What are the advantages to live in a volcanic risk area?” 
 
 ### multiple answers and recurrence..and their inferred item responses..
+
 > [AAA] wrote “tanah subur, sumber mata air melimpah, dan sejuk”  
 - we infer `subur`, `air`, and `sejuk` **item response**s of advantageousness..  
   
