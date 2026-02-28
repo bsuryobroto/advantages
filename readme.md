@@ -29,7 +29,7 @@ This study aims to
 ### multiple answers and recurrence..and their inferred item responses..
 > [AAA] wrote “tanah subur, sumber mata air melimpah, dan sejuk”  
 - we infer `subur`, `air`, and `sejuk` **item response**s of advantageousness..  
-
+  
 > [BBB] wrote “cuacanya dingin, subur”  
 - we infer this as `sejuk` and `subur`..  
 
